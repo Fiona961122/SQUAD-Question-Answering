@@ -16,8 +16,7 @@ DBFILE = "squad.sqlite"
 # SQL statements
 CREATE_TABLE = "CREATE TABLE IF NOT EXISTS {table} ({fields})"
 INSERT_ROW = "INSERT INTO {table} ({columns}) VALUES ({values})"
-SELECT_ALL = "SELECT {} FROM {}"
-SELECT = "SELECT {} FROM {} WHERE {}"
+SELECT = "SELECT {} FROM {}"
 
 
 def init():
@@ -181,8 +180,8 @@ def run(indir):
     # print("Total paragraphs inserted: {}".format(pindex))
     paragraphs = get_data(db, "context", "paragraph")
     print("Total paragraphs inserted: {}".format(len(paragraphs)))
-    training_questions = get_data(db, "*", "question", "is_train=1")
-    dev_questions = get_data(db, "question, article", "question", "is_train=0")
+    training_questions = get_data(db, "*", "question", "WHERE is_train=1")
+    dev_questions = get_data(db, "question, article", "question", "WHERE is_train=0")
     print("Training questions: {}; Dev questions: {}".format(len(training_questions), len(dev_questions)))
 
 
@@ -201,10 +200,7 @@ def get_data(db, columns, table, condition=None):
     :return: list of data
     """
     cur = db.cursor()
-    if condition is None:
-        cur.execute(SELECT_ALL.format(columns, table))
-    else:
-        cur.execute(SELECT.format(columns, table, condition))
+    cur.execute(SELECT.format(columns, table) + " " + condition)
     return cur.fetchall()
 
 if __name__ == "__main__":
