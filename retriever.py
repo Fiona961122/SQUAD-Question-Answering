@@ -35,4 +35,4 @@ class Retriever():
 if __name__ == "__main__":
     db = sqlite3.connect("squad.sqlite")
     retriever = Retriever()
-    retriever.init()
+    retriever.init(db)

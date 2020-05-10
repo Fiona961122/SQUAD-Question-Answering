@@ -190,7 +190,7 @@ def run(indir):
     db.close()
 
 
-def get_data(db, columns, table, condition=None):
+def get_data(db, columns, table, condition=""):
     """
     Select data from database
     :param db: database connection
