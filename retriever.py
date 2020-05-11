@@ -75,7 +75,6 @@ class Retriever():
 
         except IOError:
             output = {}
-
             for index, para_list in self.article.items():
                 output[index] = self.vectorizer.transform([' '.join(para_list)]).A[0]
 
@@ -129,6 +128,11 @@ class Retriever():
         computes cosine similarity between two vectors
         """
         return np.dot(vec1, vec2)/(norm(vec1)*norm(vec2))  # return cosine similarity
+
+    def get_top_five_articles_from_question(self, q_text):
+        q_vec = self.vectorizer.transform([q_text]).A[0]
+        prediction = self.get_five_most_similar(q_vec)
+
 
 
 if __name__ == "__main__":
