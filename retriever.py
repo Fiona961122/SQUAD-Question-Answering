@@ -12,11 +12,13 @@ from nltk.tokenize import word_tokenize
 from joblib import load, dump
 import numpy as np
 from numpy.linalg import norm
+import random
 
 vectorizer_path = "data/tfidf-vectorizer.jbl"
 article_vector_path = "data/article_vec.jbl"
 question_pred_path = "data/ques_pred.jbl"
-unigram_retriever = "data/unigram_retriever.jbl"
+unigram_retriever_path = "data/unigram_retriever.jbl"
+unigram_paragraph_retriever_path = "data/unigram_paragraph_retriever.jbl"
 
 class Retriever():
 
@@ -131,10 +133,56 @@ class Retriever():
 
     def get_top_five_articles_from_question(self, q_text):
         q_vec = self.vectorizer.transform([q_text]).A[0]
-        prediction = self.get_five_most_similar(q_vec)
+        predictions = self.get_five_most_similar(q_vec)
 
+        print("Top 5 most relevant articles for question \"%s\":" % q_text)
+
+        for i, index in enumerate(predictions):
+            print("Top %d, Article %d: %s" % (i + 1, index, self.article[index][0][:300]))
+
+        print()
+
+    def get_demo_from_dev_ques_index(self, dev_index):
+        r.get_top_five_articles_from_question(self.dev_questions[dev_index][0])
+        print("The correct article number is: %d\n" % (self.dev_questions[dev_index][1]))
+
+    def calculate_accuracy_by_article_index(self, dev_index):
+        question_inds = [i for i, (_, index) in enumerate(self.dev_questions) if index == dev_index]
+        correct = 0
+        for ind in question_inds:
+            q_vec = self.vectorizer.transform([self.dev_questions[ind][0]]).A[0]
+            predictions = self.get_five_most_similar(q_vec)
+            isCorrect = self.dev_questions[ind][1] in predictions
+            print("Question " + str(ind) + ": " + self.dev_questions[ind][0] + ": " + str(isCorrect))
+
+            if isCorrect:
+                correct +=1
+        print("Accuracy for article %d: %.3f" % (dev_index, (correct/len(question_inds))))
+
+    def calculate_average_cosine_similarity_to_other_articles(self, art_ind):
+        sum = 0
+        for i in [x for x in range(1, len(self.article) + 1) if x != art_ind]:
+            sum += self.get_cosine_sim_from_vecs(self.article_vectors[i], self.article_vectors[art_ind])
+
+        return sum/(len(self.article) - 1)
 
 
 if __name__ == "__main__":
+    print("Initiating retriever... Might take 5 mins on first run, and about a few seconds after everything has been saved.")
     db = sqlite3.connect("squad.sqlite")
     r = Retriever(db)
+    #r.get_top_five_articles_from_question(r.dev_questions[0][0])
+
+    print("Demo from class: ")
+    print("Successful retrievals: ")
+    r.get_top_five_articles_from_question("What legitimate dynasty came before the Yuan?")
+    r.get_top_five_articles_from_question("What planet seemed to buck Newton's gravitational laws?")
+    print("Unsuccessful retrievals: ")
+    r.get_top_five_articles_from_question("Who was elected in 1859?")
+    r.get_top_five_articles_from_question("What is treated with medical chambers?")
+
+    print("\n\nHere\'s 10 randomly generated examples: ")
+    for x in range(1, 11):
+        print("Demo #%d:" % x)
+        demo_index = random.randint(1, 11874)
+        r.get_demo_from_dev_ques_index(demo_index)
